@@ -78,9 +78,11 @@ def main():
             stub = returnAuthorUID(stub)
             a = lit_author(uid=stub)
             a.download_stories()
-
-    except:
-        raise
+    except Exception as e:
+        log.exception(e)
     finally:
         os.chdir(cwd)
         return
+
+if __name__== '__main__':
+    main()
