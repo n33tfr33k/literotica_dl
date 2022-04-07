@@ -1,6 +1,6 @@
-from html.parser import HTMLParser
 from bs4 import BeautifulSoup as soupify
 import requests
+from . import headers
 
 class Story(object):
     def __init__(self, id):
@@ -31,7 +31,7 @@ class Story(object):
 
         :raises: IOError
         '''
-        r = requests.get(self.url)
+        r = requests.get(self.url, headers=headers)
         status = r.status_code // 100
         if status == 2:
             self.fp = soupify(r.content, features="html.parser")
@@ -100,7 +100,7 @@ class Story(object):
             soups = []
             for x in range(1, self.num_pages+1):
                 print("Handling (%s) page %d/%d" % (self.get_title(), x, self.num_pages))
-                resp = requests.get("%s?page=%s" %(self.url, x))
+                resp = requests.get("%s?page=%s" %(self.url, x),headers=headers)
                 html = resp.content
                 s = soupify(html, features="html.parser")
                 soups.append(s)

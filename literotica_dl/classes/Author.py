@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup as soupify
 import requests
 
 from .Story import Story
-
+from . import headers
 class Author(object):
     def __init__(self, uid):
         try:
@@ -17,7 +17,7 @@ class Author(object):
         self.name = ""
 
     def fill_metadata(self):
-        r = requests.get("%s&page=submissions" %(self.url))
+        r = requests.get("%s&page=submissions" %(self.url), headers=headers)
         status = r.status_code // 100
         if status == 2:
             self.p = soupify(r.content, features="html.parser")
