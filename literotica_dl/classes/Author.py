@@ -3,6 +3,7 @@ import os
 from html.parser import HTMLParser
 from bs4 import BeautifulSoup as soupify
 import requests
+import re
 
 from .Story import Story
 from . import headers
@@ -38,14 +39,16 @@ class Author(object):
     def get_stories(self):
         if not self.stories:
             self.fill_metadata()
-            
+            url_match = re.compile("^https:\/\/www.literotica.com\/s\/(.+)$")
             # WARNING: hard coded class names
             tofind1, tofind2 = 'bb', 't-t84 bb nobck'
             self.stories = self.p.findAll('a', {'class': tofind1})
             self.stories += self.p.findAll('a', {'class': tofind2})
-            self.stories = [x['href'][28:] for x in self.stories]
+            self.stories = [x['href'] for x in self.stories]
+            self.stories = filter(url_match.match,self.stories)
             # toFind1 and toFind2 can return duplicates.
             # convert to set and back to revmoe duplicates
+            self.stories = [url_match.search(x).group(1) for x in self.stories]
             _ = set(self.stories)
             self.stories = list(_)
             self.stories = [Story(story_id) for story_id in self.stories]
