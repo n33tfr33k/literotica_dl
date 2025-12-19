@@ -1,6 +1,7 @@
-from html.parser import HTMLParser
+import html
 from bs4 import BeautifulSoup as soupify
 import requests
+from . import headers
 
 class Story(object):
     def __init__(self, id):
@@ -31,7 +32,7 @@ class Story(object):
 
         :raises: IOError
         '''
-        r = requests.get(self.url)
+        r = requests.get(self.url, headers=headers)
         status = r.status_code // 100
         if status == 2:
             self.fp = soupify(r.content, features="html.parser")
@@ -47,12 +48,12 @@ class Story(object):
             self.cache_first_page()
 
         # WARNING: hard coded class string
-        tofind = "b-story-user-y x-r22"
-        self.author = self.fp.find('span', {'class': tofind})
+        tofind = "y_eU"
+        self.author = self.fp.find('a', {'class': tofind})
         self.author = self.author.getText()
 
         self.title = self.fp.find('title').getText()
-        self.title = HTMLParser().unescape(self.title)
+        self.title = html.unescape(self.title)
         # rip out " - Literotica.com"
         self.title, self.category = self.title[:-17].rsplit(' - ', 1)
 
@@ -60,11 +61,14 @@ class Story(object):
         self.description = self.description['content']
         
         # WARNING: hard coded search string
-        tofind = 'b-pager-next'
+        tofind = 'l_bJ'
         if tofind in self.fp.prettify():
             # assumes that the only <option> tags are page nums
             # findAll() -> find_all() in bs4
-            self.num_pages = int(self.fp.findAll('option')[-1].text)
+            try:
+                self.num_pages = int(self.fp.findAll('a',{'class',tofind})[-1].text)
+            except KeyError:
+                self.num_pages = 2
         else:
             self.num_pages = 1
 
@@ -100,13 +104,13 @@ class Story(object):
             soups = []
             for x in range(1, self.num_pages+1):
                 print("Handling (%s) page %d/%d" % (self.get_title(), x, self.num_pages))
-                resp = requests.get("%s?page=%s" %(self.url, x))
+                resp = requests.get("%s?page=%s" %(self.url, x),headers=headers)
                 html = resp.content
                 s = soupify(html, features="html.parser")
                 soups.append(s)
 
             # WARNING: hard coded class name
-            tofind = 'b-story-body-x x-r15'
+            tofind = 'aa_ht'
             t = [soup.find('div', {'class': tofind}) for soup in soups]
             self.text = [str(s) for s in t]
         return self.text
